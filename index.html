@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style type="text/css">
+/* Disables pull-to-refresh but allows overscroll glow effects. */
+html, body {overscroll-behavior: contain;}
+
+body, .ui-overlay-a, .ui-page-theme-a {
+	background: black !important; color: white !important;
+}
+
+#wedtok {
+	display: block; margin: auto; max-wdith:100%; max-height:100dvh;
+}
+</style>
+<link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+</head>
+<body>
+
+<div data-role="page" data-dialog="true" data-close-btn="none">
+	<div data-role="header" data-theme="b">
+		<h1>Welcome</h1>
+	</div>
+	<div data-role="main" class="ui-content">
+		<p>to review the finest videos from Jules and Ajs wedding. You may navigate them by swiping up and down on your mobile device or by using the up and down buttons on your computer.</p>
+		<p>We hope you enjoy the memories as much as we do and have a great time.</p>
+		<a href="#" data-role="button" id="close_welcome">Got it</a>
+	</div>
+</div>
+
+<div data-role="page" id="videos">
+	<div data-role="content" style="padding:0;">
+		<video id="wedtok" autoplay="true" controls="true" loop="true"></video>
+	</div><!-- /content -->
+</div><!-- /page -->
+
+<script type="text/javascript">
+
+var videos = null;
+var current_video;
+var history_prev = [];
+var history_next = [];
+
+function random_video() {
+	var random;
+	do {
+		random = videos[Math.floor(Math.random() * videos.length)];
+	} while (random == current_video);
+	return random;
+}
+
+function _show_video(i) {
+	// show video without altering history, used when handling popstate event
+	current_video = i;
+	$("#wedtok").attr("src", current_video);
+}
+
+function show_video(i) {
+	// Show video and update history
+	_show_video(i);
+	window.history.pushState({video: current_video}, "", location.origin + location.pathname + location.search + "#" + ascii_to_url(current_video));
+}
+
+function next_video() {
+	var next_video = (history_next.length > 0) ? history_next.shift() : random_video();
+
+	history_prev.push(current_video);
+	show_video(next_video);
+	$("#wedtok")[0].play();
+}
+
+function prev_video() {
+	if (history_prev.length == 0) {
+		return;
+	}
+
+	history_next.unshift(current_video);
+	show_video(history_prev.pop());
+}
+
+var supportTouch = $.support.touch,
+            scrollEvent = "touchmove scroll",
+            touchStartEvent = supportTouch ? "touchstart" : "mousedown",
+            touchStopEvent = supportTouch ? "touchend" : "mouseup",
+            touchMoveEvent = supportTouch ? "touchmove" : "mousemove";
+    $.event.special.swipeupdown = {
+        setup: function() {
+            var thisObject = this;
+            var $this = $(thisObject);
+            $this.bind(touchStartEvent, function(event) {
+                var data = event.originalEvent.touches ?
+                        event.originalEvent.touches[ 0 ] :
+                        event,
+                        start = {
+                            time: (new Date).getTime(),
+                            coords: [ data.pageX, data.pageY ],
+                            origin: $(event.target)
+                        },
+                        stop;
+
+                function moveHandler(event) {
+                    if (!start) {
+                        return;
+                    }
+                    var data = event.originalEvent.touches ?
+                            event.originalEvent.touches[ 0 ] :
+                            event;
+                    stop = {
+                        time: (new Date).getTime(),
+                        coords: [ data.pageX, data.pageY ]
+                    };
+
+                    // prevent scrolling
+                    if (Math.abs(start.coords[1] - stop.coords[1]) > 10) {
+                        event.preventDefault();
+                    }
+                }
+                $this
+                        .bind(touchMoveEvent, moveHandler)
+                        .one(touchStopEvent, function(event) {
+                    $this.unbind(touchMoveEvent, moveHandler);
+                    if (start && stop) {
+                        if (stop.time - start.time < 1000 &&
+                                Math.abs(start.coords[1] - stop.coords[1]) > 30 &&
+                                Math.abs(start.coords[0] - stop.coords[0]) < 75) {
+                            event.preventDefault();
+                            start.origin
+                                    .trigger("swipeupdown")
+                                    .trigger(start.coords[1] > stop.coords[1] ? "swipeup" : "swipedown");
+                        }
+                    }
+                    start = stop = undefined;
+                });
+            });
+        }
+    };
+    $.each({
+        swipedown: "swipeupdown",
+        swipeup: "swipeupdown"
+    }, function(event, sourceEvent){
+        $.event.special[event] = {
+            setup: function(){
+                $(this).bind(sourceEvent, $.noop);
+            }
+        };
+    });
+
+function get_first_video() {
+	if (location.hash) {
+		var video = url_to_ascii(location.hash.substring(1));
+		if (videos.includes(video)) {
+			return video;
+		}
+	}
+	return random_video();
+}
+
+function start_main() {
+	$.mobile.changePage("#videos", {changeHash: false});
+	show_video(get_first_video());
+
+
+	$("body").on("swipeup", next_video);
+	$("body").on("swipedown", prev_video);
+
+	addEventListener("popstate", function (event) {
+		_show_video(event.state.video);
+	});
+
+	addEventListener("keydown", function (event) {
+		if (event.code == "ArrowUp") {
+			event.preventDefault();
+			prev_video();
+		}
+		if (event.code == "ArrowDown") {
+			event.preventDefault();
+			next_video();
+		}
+	});
+}
+
+$(function () {
+	$.get("videos.php", function (data) {
+		videos = data;
+		$("#close_welcome").click(start_main);
+	});
+});
+
+function url_to_ascii(text) {
+	return atob(text.replace(/-/g, "+").replace(/_/g, "/"));
+}
+
+function ascii_to_url(text) {
+	return btoa(text).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+</script>
+</body>
+</html>
