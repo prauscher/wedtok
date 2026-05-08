@@ -1,6 +1,6 @@
 // Feed DOM, slide construction (via <template>), playback observer, taps.
 
-import { getMeta } from "./meta.js";
+import { getCaption } from "./meta.js";
 import {
 	isLiked, addLike, removeLike,
 	isMuted, setMutedPersisted,
@@ -21,15 +21,15 @@ let hintTimer = null;
 // ---------- slide build ----------
 
 function buildSlide(file) {
-	const { author, caption } = getMeta(file);
+	const caption = getCaption(file);
 	const slide = slideTpl.content.firstElementChild.cloneNode(true);
-	slide.dataset.src = file;
+	slide.dataset.src = file.url;
 
 	const video = slide.querySelector("video");
-	video.src = file;
+	video.src = file.url;
 	video.muted = isMuted();
 
-	slide.querySelector(".author").textContent = author;
+	slide.querySelector(".author").textContent = file.author;
 
 	const cap = slide.querySelector(".caption");
 	cap.textContent = caption;
@@ -39,7 +39,7 @@ function buildSlide(file) {
 	});
 
 	const likeBtn = slide.querySelector(".like");
-	if (isLiked(file)) likeBtn.setAttribute("aria-pressed", "true");
+	if (isLiked(file.url)) likeBtn.setAttribute("aria-pressed", "true");
 	likeBtn.addEventListener("click", (e) => {
 		e.stopPropagation();
 		toggleLike(slide);

@@ -1,20 +1,6 @@
 // Deterministic per-filename author + caption generator.
 // Same filename always yields same metadata so likes/UI stay stable across reloads.
 
-const AUTHORS = [
-	"@laura", "@laura_22",
-	"@alice", "@alice_99",
-	"@ugly_fat_joe",
-	"@jasper", "@jasper_07",
-	"@sebihindert",
-	"@patrick", "@patrick_42",
-	"@julius", "@julius_404",
-	"@conny", "@conny_xo",
-	"@anna",
-	"@bine", "@bine_official",
-	"@moni", "@moni_07",
-];
-
 const CAPTION_HEADS = [
 	"no caption needed", "this one", "literally me right now", "guys look",
 	"had to share", "the vibe", "best moment", "POV", "when you see it",
@@ -72,12 +58,11 @@ function pickHashtags(h) {
 	return " " + picked.join(" ");
 }
 
-export function getMeta(filename) {
-	const h = fnv1a(filename);
-	const author = AUTHORS[h % AUTHORS.length];
+export function getCaption(file) {
+	const h = fnv1a(file.url);
 	const head = CAPTION_HEADS[(h >>> 5) % CAPTION_HEADS.length];
 	const tail = CAPTION_TAILS[(h >>> 10) % CAPTION_TAILS.length];
 	const emoji = EMOJIS[(h >>> 16) % EMOJIS.length];
 	const tags = pickHashtags(h);
-	return { author, caption: head + emoji + tail + tags };
+	return head + emoji + tail + tags;
 }
