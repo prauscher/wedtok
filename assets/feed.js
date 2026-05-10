@@ -12,12 +12,14 @@ const emptyTpl = document.getElementById("empty-tpl");
 const burstTpl = document.getElementById("burst-tpl");
 
 const DOUBLE_TAP_MS = 280;
-const HINT_MS = 1800;
+const HINT_MS = 1000;
 const KEEP_BEHIND = 5;
 
 let currentSlide = null;
 let observer = null;
 let hintTimer = null;
+let firstPlay = true;
+let hintShown = false;
 
 // ---------- slide build ----------
 
@@ -89,7 +91,7 @@ function spawnBurst(slide) {
 
 // ---------- tap handling ----------
 
-function attachVideoTaps(slide, _video, file) {
+function attachVideoTaps(slide, video, file) {
 	let lastTap = 0;
 	let singleTimer = null;
 
@@ -104,7 +106,7 @@ function attachVideoTaps(slide, _video, file) {
 		}
 		lastTap = now;
 		clearTimeout(singleTimer);
-		singleTimer = setTimeout(() => applyMute(slide.parentElement, !isMuted()), DOUBLE_TAP_MS);
+		singleTimer = setTimeout(() => applyMute(slide.parentElement, !video.muted), DOUBLE_TAP_MS);
 	});
 }
 
@@ -117,7 +119,10 @@ function applyMute(feedEl, v) {
 // ---------- mute hint ----------
 
 function showMuteHint(slide) {
-	if (!slide || !isMuted()) return;
+	if (!slide || hintShown) return;
+	const v = slide.querySelector("video");
+	if (!v || !v.muted) return;
+	hintShown = true;
 	slide.classList.add("show-hint");
 	clearTimeout(hintTimer);
 	hintTimer = setTimeout(() => slide.classList.remove("show-hint"), HINT_MS);
@@ -140,7 +145,8 @@ function setupObserver(feedEl) {
 			}
 			currentSlide = slide;
 			updatePreloadWindow(feedEl, slide);
-			video.muted = isMuted();
+			video.muted = firstPlay ? true : isMuted();
+			firstPlay = false;
 			video.play().catch(() => {});
 			writeHash(slide.dataset.src);
 			showMuteHint(slide);
