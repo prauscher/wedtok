@@ -1,18 +1,30 @@
 import { getMode, setMode, parseHash, getLikes } from "./state.js";
-import { renderFeed, nextSlide } from "./feed.js";
+import { renderFeed, appendSlides, nextSlide } from "./feed.js";
 
 const feed = document.getElementById("feed");
 const tabs = document.getElementById("tabs");
 
+const CHUNK = 5;
 let allVideos = [];
+let refilling = false;
+let seed = newSeed();
+let offset = 0;
 
-function shuffle(arr) {
-	const a = arr.slice();
-	for (let i = a.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[a[i], a[j]] = [a[j], a[i]];
+function newSeed() {
+	return Math.floor(Math.random() * 42) + 1;
+}
+
+async function fetchChunk() {
+	let chunk = await (await fetch(`videos.php?seed=${seed}&offset=${offset}&n=${CHUNK}`)).json();
+	if (!chunk.length) {
+		seed = newSeed();
+		offset = 0;
+		console.log(`[fetch] pool exhausted, new pass seed=${seed}`);
+		chunk = await (await fetch(`videos.php?seed=${seed}&offset=${offset}&n=${CHUNK}`)).json();
 	}
-	return a;
+	offset += chunk.length;
+	console.log(`[fetch] got ${chunk.length} videos (seed=${seed}, next offset=${offset})`);
+	return chunk;
 }
 
 function currentList() {
@@ -41,9 +53,27 @@ addEventListener("keydown", (e) => {
 	else if (e.code === "ArrowUp") { e.preventDefault(); nextSlide(feed, -1); }
 });
 
+async function refill() {
+	if (refilling) return;
+	refilling = true;
+	try {
+		const chunk = await fetchChunk();
+		if (!chunk.length) return;
+		allVideos.push(...chunk);
+		if (getMode() === "all") appendSlides(feed, chunk);
+	} finally {
+		refilling = false;
+	}
+}
+
+feed.addEventListener("slidechange", (e) => {
+	if (getMode() !== "all") return;
+	const { index, total } = e.detail;
+	if (total - index - 1 < 3) refill();
+});
+
 (async function init() {
-	const list = await (await fetch("videos.php")).json();
-	allVideos = shuffle(list);
+	allVideos = await fetchChunk();
 
 	const { mode, file } = parseHash();
 	setMode(mode);

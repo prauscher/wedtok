@@ -13,6 +13,7 @@ const burstTpl = document.getElementById("burst-tpl");
 
 const DOUBLE_TAP_MS = 280;
 const HINT_MS = 1800;
+const KEEP_BEHIND = 5;
 
 let currentSlide = null;
 let observer = null;
@@ -144,6 +145,9 @@ function setupObserver(feedEl) {
 			video.play().catch(() => {});
 			writeHash(slide.dataset.src);
 			showMuteHint(slide);
+			feedEl.dispatchEvent(new CustomEvent("slidechange", {
+				detail: { index: [...feedEl.children].indexOf(slide), total: feedEl.children.length },
+			}));
 		}
 	}, { root: feedEl, threshold: [0, 0.6, 1] });
 
@@ -179,6 +183,30 @@ export function renderFeed(feedEl, list, targetFile) {
 	const targetSlide = [...feedEl.children].find((s) => s.dataset.src === target);
 	if (targetSlide) targetSlide.scrollIntoView({ behavior: "instant", block: "start" });
 	showMuteHint(targetSlide);
+}
+
+export function appendSlides(feedEl, list) {
+	for (const f of list) {
+		const slide = buildSlide(f);
+		feedEl.appendChild(slide);
+		observer?.observe(slide);
+	}
+	if (currentSlide) updatePreloadWindow(feedEl, currentSlide);
+	pruneOld(feedEl);
+}
+
+function pruneOld(feedEl) {
+	if (!currentSlide) return;
+	while (true) {
+		const currentIdx = [...feedEl.children].indexOf(currentSlide);
+		if (currentIdx <= KEEP_BEHIND) break;
+		const first = feedEl.firstElementChild;
+		if (!first || first === currentSlide) break;
+		observer?.unobserve(first);
+		const v = first.querySelector("video");
+		if (v) { v.pause(); v.removeAttribute("src"); v.load(); }
+		first.remove();
+	}
 }
 
 export function nextSlide(feedEl, dir) {
