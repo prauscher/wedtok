@@ -7,26 +7,37 @@ const likes = loadLikes();
 let muted = loadMuted();
 let mode = "all";
 
+//since we changed the indexing for the localStorage, we need to check for old keys
+function isValidVideo(v) {
+	return v && typeof v === "object" && typeof v.url === "string" && typeof v.author === "string";
+}
 function loadLikes() {
+	let raw;
 	try {
-		const raw = JSON.parse(localStorage.getItem(LIKES_KEY) || "[]");
-		return new Set(Array.isArray(raw) ? raw : []);
+		raw = JSON.parse(localStorage.getItem(LIKES_KEY) || "[]");
 	} catch {
-		return new Set();
+		raw = [];
 	}
+	if (!Array.isArray(raw)) raw = [];
+	const clean = raw.filter(isValidVideo);
+	const map = new Map(clean.map((v) => [v.url, v]));
+	if (clean.length !== raw.length) {
+		localStorage.setItem(LIKES_KEY, JSON.stringify([...map.values()]));
+	}
+	return map;
 }
 function saveLikes() {
-	localStorage.setItem(LIKES_KEY, JSON.stringify([...likes]));
+	localStorage.setItem(LIKES_KEY, JSON.stringify([...likes.values()]));
 }
 function loadMuted() {
 	const v = localStorage.getItem(MUTED_KEY);
 	return v === null ? true : v === "1";
 }
 
-export function getLikes() { return likes; }
-export function isLiked(file) { return likes.has(file); }
-export function addLike(file) { likes.add(file); saveLikes(); }
-export function removeLike(file) { likes.delete(file); saveLikes(); }
+export function getLikes() { return [...likes.values()]; }
+export function isLiked(url) { return likes.has(url); }
+export function addLike(video) { likes.set(video.url, video); saveLikes(); }
+export function removeLike(url) { likes.delete(url); saveLikes(); }
 
 export function isMuted() { return muted; }
 export function setMutedPersisted(v) {

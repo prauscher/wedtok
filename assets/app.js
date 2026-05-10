@@ -28,9 +28,7 @@ async function fetchChunk() {
 }
 
 function currentList() {
-	if (getMode() === "liked") {
-		return [...getLikes()].filter((f) => allVideos.includes(f));
-	}
+	if (getMode() === "liked") return getLikes();
 	return allVideos;
 }
 

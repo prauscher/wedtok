@@ -43,7 +43,7 @@ function buildSlide(file) {
 	if (isLiked(file.url)) likeBtn.setAttribute("aria-pressed", "true");
 	likeBtn.addEventListener("click", (e) => {
 		e.stopPropagation();
-		toggleLike(slide);
+		toggleLike(slide, file);
 	});
 
 	const fill = slide.querySelector(".progress-fill");
@@ -52,7 +52,7 @@ function buildSlide(file) {
 		fill.style.width = (video.currentTime / video.duration * 100) + "%";
 	});
 
-	attachVideoTaps(slide, video);
+	attachVideoTaps(slide, video, file);
 	return slide;
 }
 
@@ -64,13 +64,12 @@ function buildEmpty(text) {
 
 // ---------- likes ----------
 
-function toggleLike(slide, { forceLike = false } = {}) {
-	const file = slide.dataset.src;
+function toggleLike(slide, file, { forceLike = false } = {}) {
 	const btn = slide.querySelector(".like");
-	const liked = isLiked(file);
+	const liked = isLiked(file.url);
 
 	if (liked && !forceLike) {
-		removeLike(file);
+		removeLike(file.url);
 		btn.setAttribute("aria-pressed", "false");
 		return;
 	}
@@ -90,7 +89,7 @@ function spawnBurst(slide) {
 
 // ---------- tap handling ----------
 
-function attachVideoTaps(slide, _video) {
+function attachVideoTaps(slide, _video, file) {
 	let lastTap = 0;
 	let singleTimer = null;
 
@@ -100,7 +99,7 @@ function attachVideoTaps(slide, _video) {
 		if (now - lastTap < DOUBLE_TAP_MS) {
 			lastTap = 0;
 			clearTimeout(singleTimer);
-			toggleLike(slide, { forceLike: true });
+			toggleLike(slide, file, { forceLike: true });
 			return;
 		}
 		lastTap = now;
@@ -179,7 +178,7 @@ export function renderFeed(feedEl, list, targetFile) {
 	for (const f of list) feedEl.appendChild(buildSlide(f));
 	setupObserver(feedEl);
 
-	const target = (targetFile && list.includes(targetFile)) ? targetFile : list[0];
+	const target = (targetFile && list.some((v) => v.url === targetFile)) ? targetFile : list[0].url;
 	const targetSlide = [...feedEl.children].find((s) => s.dataset.src === target);
 	if (targetSlide) targetSlide.scrollIntoView({ behavior: "instant", block: "start" });
 	showMuteHint(targetSlide);
