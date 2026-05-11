@@ -1,6 +1,5 @@
 // Feed DOM, slide construction (via <template>), playback observer, taps.
 
-import { getCaption } from "./meta.js";
 import {
 	isLiked, addLike, removeLike,
 	isMuted, setMutedPersisted,
@@ -24,7 +23,7 @@ let hintShown = false;
 // ---------- slide build ----------
 
 function buildSlide(file) {
-	const caption = getCaption(file);
+	const caption = file.caption + " " + file.tags.join(" ");
 	const slide = slideTpl.content.firstElementChild.cloneNode(true);
 	slide.dataset.src = file.url;
 
