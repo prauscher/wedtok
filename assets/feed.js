@@ -25,6 +25,7 @@ let hintShown = false;
 function buildSlide(file) {
 	const caption = file.caption + " " + file.tags.join(" ");
 	const slide = slideTpl.content.firstElementChild.cloneNode(true);
+	slide.dataset.fileid = file.fileid;
 	slide.dataset.src = file.url;
 
 	const video = slide.querySelector("video");
@@ -147,7 +148,7 @@ function setupObserver(feedEl) {
 			video.muted = firstPlay ? true : isMuted();
 			firstPlay = false;
 			video.play().catch(() => {});
-			writeHash(slide.dataset.src);
+			writeHash(slide.dataset.fileid);
 			showMuteHint(slide);
 			feedEl.dispatchEvent(new CustomEvent("slidechange", {
 				detail: { index: [...feedEl.children].indexOf(slide), total: feedEl.children.length },
@@ -171,7 +172,7 @@ function updatePreloadWindow(feedEl, slide) {
 
 // ---------- public ----------
 
-export function renderFeed(feedEl, list, targetFile) {
+export function renderFeed(feedEl, list) {
 	feedEl.innerHTML = "";
 	currentSlide = null;
 
@@ -183,10 +184,8 @@ export function renderFeed(feedEl, list, targetFile) {
 	for (const f of list) feedEl.appendChild(buildSlide(f));
 	setupObserver(feedEl);
 
-	const target = (targetFile && list.some((v) => v.url === targetFile)) ? targetFile : list[0].url;
-	const targetSlide = [...feedEl.children].find((s) => s.dataset.src === target);
-	if (targetSlide) targetSlide.scrollIntoView({ behavior: "instant", block: "start" });
-	showMuteHint(targetSlide);
+	const startSlide = feedEl.children[0];
+	showMuteHint(startSlide);
 }
 
 export function appendSlides(feedEl, list) {

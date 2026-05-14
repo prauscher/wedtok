@@ -7,6 +7,7 @@ const tabs = document.getElementById("tabs");
 const CHUNK = 5;
 let allVideos = [];
 let refilling = false;
+let startFileId = null;
 let seed = newSeed();
 let offset = 0;
 
@@ -15,7 +16,7 @@ function newSeed() {
 }
 
 async function fetchChunk() {
-	let chunk = await (await fetch(`videos.php?seed=${seed}&offset=${offset}&n=${CHUNK}`)).json();
+	let chunk = await (await fetch(`videos.php?seed=${seed}&offset=${offset}&n=${CHUNK}&start_fileid=${startFileId}`)).json();
 	if (!chunk.length) {
 		seed = newSeed();
 		offset = 0;
@@ -43,7 +44,7 @@ tabs.addEventListener("click", (e) => {
 	if (!btn || btn.dataset.mode === getMode()) return;
 	setMode(btn.dataset.mode);
 	syncTabs();
-	renderFeed(feed, currentList(), null);
+	renderFeed(feed, currentList());
 });
 
 addEventListener("keydown", (e) => {
@@ -71,10 +72,12 @@ feed.addEventListener("slidechange", (e) => {
 });
 
 (async function init() {
+	const { mode, file } = parseHash();
+	startFileId = file;
+
 	allVideos = await fetchChunk();
 
-	const { mode, file } = parseHash();
 	setMode(mode);
 	syncTabs();
-	renderFeed(feed, currentList(), file);
+	renderFeed(feed, currentList());
 })();

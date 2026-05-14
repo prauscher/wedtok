@@ -53,15 +53,19 @@ $seed = isset($_GET['seed']) ? intval($_GET['seed']) : 0;
 $offset = isset($_GET['offset']) ? max(0, intval($_GET['offset'])) : 0;
 $n = isset($_GET['n']) ? min(20, max(1, intval($_GET['n']))) : 5;
 
-$urls = glob("videos/*.mp4");
-sort($urls);
-if ($seed) {
-	mt_srand($seed);
-	for ($i = count($urls) - 1; $i > 0; $i--) {
-		$j = mt_rand(0, $i);
-		$tmp = $urls[$i]; $urls[$i] = $urls[$j]; $urls[$j] = $tmp;
-	}
+function build_fileid($filename) {
+	return hexdec(substr(md5($filename),0,8));
 }
+
+function pseudorandom($fileid) {
+	global $seed;
+	return hexdec(substr(md5($seed . "#" . $fileid), 0, 8));
+}
+
+$start_random = isset($_GET['start_fileid']) ? pseudorandom(intval(($_GET['start_fileid'])) : 0;
+
+$urls = glob("videos/*.mp4");
+usort($urls, function ($a, $b) {global $start_random; return (pseudorandom(build_fileid($b)) - $start_random) - (pseudorandom(build_fileid($a)) - $start_random);});
 $urls = array_slice($urls, $offset, $n);
 
 function select_modulo($list, $i) {
@@ -86,6 +90,7 @@ foreach ($urls as $url) {
 	$hashtags = array_unique($hashtags);
 
 	$videos[] = array(
+		"fileid" => build_fileid($url),
 		"url" => $url,
 		"author" => select_modulo($authors, $h),
 		"caption" => $caption,
