@@ -4,7 +4,7 @@ import { renderFeed, appendSlides, nextSlide } from "./feed.js";
 const feed = document.getElementById("feed");
 const tabs = document.getElementById("tabs");
 
-const CHUNK = 5;
+let chunk_size = 3;
 let allVideos = [];
 let refilling = false;
 let startFileId = null;
@@ -16,12 +16,14 @@ function newSeed() {
 }
 
 async function fetchChunk() {
-	let chunk = await (await fetch(`videos.php?seed=${seed}&offset=${offset}&n=${CHUNK}&start_fileid=${startFileId}`)).json();
+	let chunk = await (await fetch(`videos.php?seed=${seed}&offset=${offset}&n=${chunk_size}&start_fileid=${startFileId}`)).json();
+	// speedup first videos by decreasing initial video chunk size
+	chunk_size = 5;
 	if (!chunk.length) {
 		seed = newSeed();
 		offset = 0;
 		console.log(`[fetch] pool exhausted, new pass seed=${seed}`);
-		chunk = await (await fetch(`videos.php?seed=${seed}&offset=${offset}&n=${CHUNK}`)).json();
+		chunk = await (await fetch(`videos.php?seed=${seed}&offset=${offset}&n=${chunk_size}`)).json();
 	}
 	offset += chunk.length;
 	console.log(`[fetch] got ${chunk.length} videos (seed=${seed}, next offset=${offset})`);
@@ -68,7 +70,7 @@ async function refill() {
 feed.addEventListener("slidechange", (e) => {
 	if (getMode() !== "all") return;
 	const { index, total } = e.detail;
-	if (total - index - 1 < 3) refill();
+	if (total - index - 1 < 2) refill();
 });
 
 (async function init() {
