@@ -29,6 +29,7 @@ function buildSlide(file) {
 	slide.dataset.src = file.url;
 
 	const video = slide.querySelector("video");
+	video.preload = "none";
 	video.src = file.url;
 	video.muted = isMuted();
 
@@ -166,7 +167,7 @@ function updatePreloadWindow(feedEl) {
 	const idx = slides.indexOf(currentSlide);
 	slides.forEach((s, i) => {
 		const v = s.querySelector("video");
-		if (v) v.preload = (Math.abs(i - idx) <= 1) ? "auto" : "metadata";
+		if (v) v.preload = (Math.abs(i - idx) <= 1) ? "auto" : "none";
 	});
 }
 
