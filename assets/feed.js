@@ -144,7 +144,7 @@ function setupObserver(feedEl) {
 				if (prev) { prev.pause(); prev.currentTime = 0; }
 			}
 			currentSlide = slide;
-			updatePreloadWindow(feedEl, slide);
+			updatePreloadWindow(feedEl);
 			video.muted = firstPlay ? true : isMuted();
 			firstPlay = false;
 			video.play().catch(() => {});
@@ -161,9 +161,9 @@ function setupObserver(feedEl) {
 	}
 }
 
-function updatePreloadWindow(feedEl, slide) {
+function updatePreloadWindow(feedEl) {
 	const slides = [...feedEl.children];
-	const idx = slides.indexOf(slide);
+	const idx = slides.indexOf(currentSlide);
 	slides.forEach((s, i) => {
 		const v = s.querySelector("video");
 		if (v) v.preload = (Math.abs(i - idx) <= 1) ? "auto" : "metadata";
@@ -194,7 +194,7 @@ export function appendSlides(feedEl, list) {
 		feedEl.appendChild(slide);
 		observer?.observe(slide);
 	}
-	if (currentSlide) updatePreloadWindow(feedEl, currentSlide);
+	if (currentSlide) updatePreloadWindow(feedEl);
 	pruneOld(feedEl);
 }
 
