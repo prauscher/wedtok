@@ -16,6 +16,7 @@ function newSeed() {
 }
 
 async function fetchChunk() {
+	console.log(`[fetch] starting fetch (seed=${seed}, offset=${offset}, start=${startFileId})`);
 	let chunk = await (await fetch(`videos.php?seed=${seed}&offset=${offset}&n=${chunk_size}&start_fileid=${startFileId}`)).json();
 	// speedup first videos by decreasing initial video chunk size
 	chunk_size = 5;
@@ -68,8 +69,10 @@ async function refill() {
 }
 
 feed.addEventListener("slidechange", (e) => {
-	if (getMode() !== "all") return;
+	const mode = getMode();
 	const { index, total } = e.detail;
+	console.log(`[slidechange] mode=${mode}, index=${index}, total=${total}`);
+	if (mode !== "all") return;
 	if (total - index - 1 < 2) refill();
 });
 
