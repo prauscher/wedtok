@@ -17,7 +17,6 @@ const KEEP_BEHIND = 5;
 let currentSlide = null;
 let observer = null;
 let hintTimer = null;
-let firstPlay = true;
 let hintShown = false;
 
 // ---------- slide build ----------
@@ -140,17 +139,19 @@ function setupObserver(feedEl) {
 			const video = slide.querySelector("video");
 			if (!video) continue;
 
-			if (currentSlide && currentSlide !== slide) {
-				const prev = currentSlide.querySelector("video");
-				if (prev) { prev.pause(); prev.currentTime = 0; }
-			}
+			const oldFileId = currentSlide ? currentSlide.dataset.fileid : null;
+			const prev = currentSlide ? currentSlide.querySelector("video") : null;
+			if (oldFileId === slide.dataset.fileid) continue;
+
+			console.log(`[scroll] oldId=${oldFileId}, new=${slide.dataset.fileid}`);
+			if (prev) { prev.pause(); prev.currentTime = 0; }
+
 			currentSlide = slide;
 			updatePreloadWindow(feedEl);
-			video.muted = firstPlay ? true : isMuted();
-			firstPlay = false;
+			video.muted = prev ? prev.muted : true;
 			video.play().catch(() => {});
-			writeHash(slide.dataset.fileid);
-			showMuteHint(slide);
+			writeHash(currentSlide.dataset.fileid);
+			showMuteHint(currentSlide);
 			feedEl.dispatchEvent(new CustomEvent("slidechange", {
 				detail: { index: [...feedEl.children].indexOf(slide), total: feedEl.children.length },
 			}));
@@ -204,6 +205,7 @@ function pruneOld(feedEl) {
 	if (!currentSlide) return;
 	while (true) {
 		const currentIdx = [...feedEl.children].indexOf(currentSlide);
+		console.log(`[pruneOld] currentSlide=${!!currentSlide}, currentIdx=${currentIdx}`);
 		if (currentIdx <= KEEP_BEHIND) break;
 		const first = feedEl.firstElementChild;
 		if (!first || first === currentSlide) break;

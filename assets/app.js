@@ -23,6 +23,7 @@ async function fetchChunk() {
 	if (!chunk.length) {
 		seed = newSeed();
 		offset = 0;
+		startFileId = null;
 		console.log(`[fetch] pool exhausted, new pass seed=${seed}`);
 		chunk = await (await fetch(`videos.php?seed=${seed}&offset=${offset}&n=${chunk_size}`)).json();
 	}
@@ -56,14 +57,17 @@ addEventListener("keydown", (e) => {
 });
 
 async function refill() {
+	console.log(`[refill] refilling=${refilling}`);
 	if (refilling) return;
 	refilling = true;
+	console.log(`[refill] locked`);
 	try {
 		const chunk = await fetchChunk();
 		if (!chunk.length) return;
 		allVideos.push(...chunk);
 		if (getMode() === "all") appendSlides(feed, chunk);
 	} finally {
+		console.log(`[refill] unlock`);
 		refilling = false;
 	}
 }
