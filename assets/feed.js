@@ -154,6 +154,7 @@ function setupObserver(feedEl) {
 			feedEl.dispatchEvent(new CustomEvent("slidechange", {
 				detail: { index: [...feedEl.children].indexOf(slide), total: feedEl.children.length },
 			}));
+			break;
 		}
 	}, { root: feedEl, threshold: [0, 0.6, 1] });
 
