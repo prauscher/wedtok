@@ -18,6 +18,7 @@ let currentSlide = null;
 let observer = null;
 let hintTimer = null;
 let hintShown = false;
+let pruning = false;
 
 // ---------- slide build ----------
 
@@ -133,6 +134,7 @@ function showMuteHint(slide) {
 function setupObserver(feedEl) {
 	observer?.disconnect();
 	observer = new IntersectionObserver((entries) => {
+		if (pruning) return;
 		for (const e of entries) {
 			if (!(e.isIntersecting && e.intersectionRatio >= 0.6)) continue;
 			const slide = e.target;
@@ -202,18 +204,26 @@ export function appendSlides(feedEl, list) {
 }
 
 function pruneOld(feedEl) {
-	if (!currentSlide) return;
-	while (true) {
-		const currentIdx = [...feedEl.children].indexOf(currentSlide);
-		console.log(`[pruneOld] currentSlide=${!!currentSlide}, currentIdx=${currentIdx}`);
-		if (currentIdx <= KEEP_BEHIND) break;
-		const first = feedEl.firstElementChild;
-		if (!first || first === currentSlide) break;
-		observer?.unobserve(first);
-		const v = first.querySelector("video");
-		if (v) { v.pause(); v.removeAttribute("src"); v.load(); }
-		first.remove();
+	if (!currentSlide || pruning) return;
+	pruning = true;
+	console.log(`[pruneOld] locked`);
+	try {
+		while (true) {
+			const currentIdx = [...feedEl.children].indexOf(currentSlide);
+			console.log(`[pruneOld] currentSlide=${!!currentSlide}, currentIdx=${currentIdx}`);
+			if (currentIdx <= KEEP_BEHIND) break;
+			const first = feedEl.firstElementChild;
+			if (!first || first === currentSlide) break;
+				observer?.unobserve(first);
+			const v = first.querySelector("video");
+			if (v) { v.pause(); v.removeAttribute("src"); v.load(); }
+			first.remove();
+		}
+	} finally {
+		console.log(`[pruneOld] unlock`);
+		pruning = false;
 	}
+	currentSlide.scrollIntoView({ behavior: "instant", block: "start" });
 }
 
 export function nextSlide(feedEl, dir) {
