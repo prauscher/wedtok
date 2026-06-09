@@ -1,10 +1,8 @@
-// Persisted state (likes, muted) and URL hash routing.
+// Persisted state (likes) and URL hash routing.
 
 const LIKES_KEY = "wedtok.likes";
-const MUTED_KEY = "wedtok.muted";
 
 const likes = loadLikes();
-let muted = loadMuted();
 let mode = "all";
 
 //since we changed the indexing for the localStorage, we need to check for old keys
@@ -29,21 +27,11 @@ function loadLikes() {
 function saveLikes() {
 	localStorage.setItem(LIKES_KEY, JSON.stringify([...likes.values()]));
 }
-function loadMuted() {
-	const v = localStorage.getItem(MUTED_KEY);
-	return v === null ? true : v === "1";
-}
 
 export function getLikes() { return [...likes.values()]; }
 export function isLiked(url) { return likes.has(url); }
 export function addLike(video) { likes.set(video.url, video); saveLikes(); }
 export function removeLike(url) { likes.delete(url); saveLikes(); }
-
-export function isMuted() { return muted; }
-export function setMutedPersisted(v) {
-	muted = !!v;
-	localStorage.setItem(MUTED_KEY, muted ? "1" : "0");
-}
 
 export function getMode() { return mode; }
 export function setMode(m) { mode = (m === "liked") ? "liked" : "all"; }

@@ -2,7 +2,6 @@
 
 import {
 	isLiked, addLike, removeLike,
-	isMuted, setMutedPersisted,
 	writeHash,
 } from "./state.js";
 
@@ -31,7 +30,7 @@ function buildSlide(file) {
 	const video = slide.querySelector("video");
 	video.preload = "none";
 	video.src = file.url;
-	video.muted = isMuted();
+	video.muted = true;
 
 	slide.querySelector(".author").textContent = file.author;
 
@@ -112,7 +111,6 @@ function attachVideoTaps(slide, video, file) {
 }
 
 function applyMute(feedEl, v) {
-	setMutedPersisted(v);
 	for (const video of feedEl.querySelectorAll("video")) video.muted = v;
 	if (!v && currentSlide) currentSlide.classList.remove("show-hint");
 }
