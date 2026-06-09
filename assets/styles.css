@@ -76,7 +76,7 @@ button {
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;
 }
-.caption.clamped {
+#feed.caption-clamped .caption {
 	display: -webkit-box;
 	-webkit-line-clamp: 1;
 	-webkit-box-orient: vertical;

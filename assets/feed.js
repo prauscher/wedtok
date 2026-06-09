@@ -39,7 +39,7 @@ function buildSlide(file) {
 	cap.textContent = caption;
 	cap.addEventListener("click", (e) => {
 		e.stopPropagation();
-		cap.classList.toggle("clamped");
+		slide.parentElement.classList.toggle("caption-clamped");
 	});
 
 	const likeBtn = slide.querySelector(".like");
