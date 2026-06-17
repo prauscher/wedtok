@@ -57,7 +57,15 @@ export function parseHash() {
 	return { mode: "all", file: urlSafeDecode(h) };
 }
 
-export function writeHash(file) {
-	const next = "#" + mode + "/" + urlSafeEncode(file);
+function buildHash(slide) {
+	return "#" + mode + "/" + urlSafeEncode(slide.dataset.fileid);
+}
+
+export function writeHash(slide) {
+	const next = buildHash(slide);
 	if (location.hash !== next) history.replaceState(null, "", next);
+}
+
+export function buildURL(slide) {
+	return new URL(buildHash(slide), location).href;
 }

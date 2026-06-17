@@ -2,7 +2,7 @@
 
 import {
 	isLiked, addLike, removeLike,
-	writeHash,
+	writeHash, buildURL,
 } from "./state.js";
 
 const slideTpl = document.getElementById("slide-tpl");
@@ -39,6 +39,19 @@ function buildSlide(file) {
 	cap.addEventListener("click", (e) => {
 		e.stopPropagation();
 		slide.parentElement.classList.toggle("caption-clamped");
+	});
+
+	const shareData = {
+		"url": buildURL(slide),
+		"title": "WedTok",
+	};
+	const shareBtn = slide.querySelector(".share");
+	if (! navigator.canShare?.(shareData)) {
+		shareBtn.style.display = "none";
+	}
+	shareBtn.addEventListener("click", (e) => {
+		e.stopPropagation();
+		navigator.share(shareData);
 	});
 
 	const likeBtn = slide.querySelector(".like");
@@ -150,7 +163,7 @@ function setupObserver(feedEl) {
 			updatePreloadWindow(feedEl);
 			video.muted = prev ? prev.muted : true;
 			video.play().catch(() => {});
-			writeHash(currentSlide.dataset.fileid);
+			writeHash(currentSlide);
 			showMuteHint(currentSlide);
 			feedEl.dispatchEvent(new CustomEvent("slidechange", {
 				detail: { index: [...feedEl.children].indexOf(slide), total: feedEl.children.length },
