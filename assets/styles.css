@@ -121,7 +121,7 @@ button {
 }
 .like[aria-pressed="false"] .heart { color: rgba(255,255,255,.05); }
 
-.mute-hint {
+.mute-hint, #clipboard-hint {
 	position: absolute;
 	left: 50%;
 	top: 50%;
@@ -135,6 +135,7 @@ button {
 	transition: opacity .25s;
 }
 .slide.show-hint .mute-hint { opacity: 1; }
+#clipboard-hint.show-hint { opacity: 1; }
 
 .burst {
 	position: absolute;

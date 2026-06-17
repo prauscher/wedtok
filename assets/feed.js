@@ -17,6 +17,7 @@ let currentSlide = null;
 let observer = null;
 let hintTimer = null;
 let hintShown = false;
+let clipboardHintTimer = null;
 let pruning = false;
 
 // ---------- slide build ----------
@@ -46,12 +47,18 @@ function buildSlide(file) {
 		"title": "WedTok",
 	};
 	const shareBtn = slide.querySelector(".share");
-	if (! navigator.canShare?.(shareData)) {
-		shareBtn.style.display = "none";
-	}
 	shareBtn.addEventListener("click", (e) => {
 		e.stopPropagation();
-		navigator.share(shareData);
+		if (navigator.canShare?.(shareData)) {
+			navigator.share(shareData);
+		} else {
+			navigator.clipboard.writeText(shareData.url).then(() => {
+				const hint = document.getElementById("clipboard-hint");
+				hint.classList.add("show-hint");
+				clearTimeout(clipboardHintTimer);
+				clipboardHintTimer = setTimeout(() => hint.classList.remove("show-hint"), HINT_MS);
+			});
+		}
 	});
 
 	const likeBtn = slide.querySelector(".like");
